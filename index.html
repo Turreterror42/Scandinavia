@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>En route vers la Scandinavie — Scansion latin</title>
+<style>
+  :root{
+  --bg:#f5f7fb;
+  --card:#ffffff;
+  --accent:#2563eb;
+  --muted:#64748b;
+  --correct:#16a34a;
+  --wrong:#dc2626;
+  }
+
+  *{box-sizing:border-box}
+  html,body{height:100%}
+
+  body{
+    margin:0;
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;
+    background:var(--bg);
+    color:#0f172a;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  /* background image adouci */
+  .bg {
+    position:fixed;
+    inset:0;
+    background-image: url('https://images.unsplash.com/photo-1507842217343-583bb7270b66?q=80&w=1800&auto=format&fit=crop&ixlib=rb-4.0.3&s=3b5f0b6a5c3d9e9f8a2b3e2f9f6d4a7a');
+    background-size:cover;
+    background-position:center;
+    z-index:0;
+  }
+
+  /* layout */
+  .wrap{
+    position:relative;
+    z-index:2;
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:20px;
+  }
+
+  .app{
+    width:100%;
+    max-width:920px;
+    border-radius:16px;
+    overflow:hidden;
+    display:flex;
+    flex-direction:column;
+    background:var(--card);
+    box-shadow:0 15px 40px rgba(0,0,0,0.1);
+  }
+
+  /* header */
+  header{
+    padding:16px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+  }
+
+  header h1{
+    margin:0;
+    font-size:18px;
+    color:#0f172a;
+    text-shadow:none;
+  }
+
+  header .score{
+    font-weight:700;
+    color:var(--accent);
+    background:#eff6ff;
+    padding:6px 10px;
+    border-radius:10px;
+  }
+
+  /* intro */
+  .intro{
+    padding:20px;
+    color:#1e293b;
+  }
+
+  .intro h2{
+    margin:0 0 8px;
+  }
+
+  .intro p{
+    color:var(--muted);
+  }
+
+  .intro li{
+    color:var(--muted);
+  }
+
+  .controls-row{
+    display:flex;
+    gap:8px;
+  }
+
+  /* buttons */
+  .btn{
+    background:var(--accent);
+    color:white;
+    border:0;
+    padding:10px 14px;
+    border-radius:10px;
+    cursor:pointer;
+    font-weight:700;
+    transition:0.2s;
+  }
+
+  .btn:hover{
+    opacity:0.9;
+  }
+
+  .btn.secondary{
+    background:#e2e8f0;
+    color:#0f172a;
+    border:none;
+  }
+
+  .btn.ghost{
+    background:transparent;
+    border:1px solid #cbd5e1;
+    color:#334155;
+  }
+
+  /* main */
+  main{
+    padding:16px;
+  }
+
+  /* cards */
+  .line-card{
+    padding:14px;
+    border-radius:12px;
+    background:#ffffff;
+    border:1px solid #e5e7eb;
+    margin-bottom:12px;
+  }
+
+  .line-number{
+    font-size:13px;
+    color:var(--muted);
+    margin-bottom:8px;
+  }
+
+  .line-text{
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+  }
+
+  /* syllables */
+  .syllable{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    min-width:44px;
+    padding:8px;
+    border-radius:10px;
+    cursor:pointer;
+    transition:0.15s;
+  }
+
+  .syllable:hover{
+    background:#f1f5f9;
+  }
+
+  .choice{
+    font-size:12px;
+    color:var(--muted);
+    min-height:18px;
+  }
+
+  .text{
+    font-weight:700;
+    font-size:16px;
+  }
+
+  .syllable.correct{
+    background:rgba(22,163,74,0.2);
+  }
+
+  .syllable.wrong{
+    background:rgba(220,38,38,0.15);
+  }
+
+  .syllable.focus{
+    outline:2px solid var(--accent);
+  }
+
+  /* footer */
+  .footer{
+    padding:12px;
+    border-top:1px solid #e5e7eb;
+    display:flex;
+    justify-content:flex-end;
+    color:var(--muted);
+  }
+
+  /* confetti */
+  .confetti-piece{
+    position:fixed;
+    width:10px;
+    height:14px;
+    opacity:0.7;
+    z-index:9999;
+  }
+
+  #nextBtn.disabled-hidden {
+    opacity: 0.4;
+    pointer-events: none;
+  }
+
+  /* mobile */
+  @media (max-width:640px){
+    .syllable{min-width:36px;padding:6px}
+    .text{font-size:14px}
+    .app{border-radius:10px}
+  }
+</style>
+</head>
+<body>
+  <div class="bg" aria-hidden="true"></div>
+
+  <div class="wrap">
+    <div class="app" role="application" aria-label="En route vers la Scandinavie — jeu de scansion">
+      <header>
+        <h1>En route vers la Scandinavie <span style="font-size:18px">🏛📜</span></h1>
+        <div class="score">Score: <span id="score">0</span></div>
+      </header>
+
+      <section class="intro" id="intro">
+        <h2>Comment jouer</h2>
+        <p>
+          La scansion latine : déterminer la quantité (brève / longue) de chaque syllabe.
+          Suivez ces étapes :
+        </p>
+        <ul style="margin:8px 0 12px;color:#e6eefc;line-height:1.45">
+          <li>Au départ, les syllabes n'affichent aucun indicateur autour d'elles.</li>
+          <li>Tapez une syllabe : elle devient <strong>Brève</strong>.</li>
+          <li>Re-tapez-la : elle alterne entre <strong>Longue</strong> et <strong>Brève</strong> (cycle b ⇄ l).</li>
+          <li>Appuyez sur <strong>Valider</strong> pour corriger le vers : points attribués et marqueurs affichés.</li>
+          <li>Si toutes les syllabes sont correctes, des confettis tomberont sur toute la largeur de l'écran.</li>
+        </ul>
+        <div class="controls-row">
+          <button class="btn" id="startBtn">Commencer</button>
+        </div>
+      </section>
+
+      <main id="game" style="display:none;">
+        <div id="linesContainer"></div>
+
+        <div style="display:flex;gap:8px;align-items:center;margin-top:8px;flex-wrap:wrap">
+          <button class="btn secondary" id="validateBtn">Valider</button>
+          <button class="btn ghost" id="nextBtn">Vers suivant</button>
+          <div style="flex:1"></div>
+          <div style="color:var(--muted)">Vers: <span id="currentLineIndex">1</span>/<span id="totalLines">4</span></div>
+        </div>
+
+        <div id="resultArea" style="margin-top:10px" aria-live="polite"></div>
+      </main>
+
+      <div class="footer">
+        <div></div>
+        <div>Créé par Michel Durand</div>
+      </div>
+    </div>
+  </div>
+
+<script>
+/* Vers — facile à étendre */
+const versData = [
+  {
+    text:"Arma virumque cano, Troiae qui primus ab oris",
+    syllables:[
+      {s:"Ar",correct:"l"},{s:"ma",correct:"b"},{s:"vir",correct:"b"},{s:"um",correct:"l"},{s:"que",correct:"b"},
+      {s:"ca",correct:"b"},{s:"no",correct:"l"},{s:"Troi",correct:"l"},{s:"ae",correct:"l"},{s:"qui",correct:"l"},
+      {s:"pri",correct:"l"},{s:"mus",correct:"b"},{s:"ab",correct:"b"},{s:"o",correct:"l"},{s:"ris",correct:"b"}
+    ]
+  },
+  {
+    text:"Italiam fato profugus Laviniaque venit",
+    syllables:[
+      {s:"I",correct:"l"},{s:"ta",correct:"b"},{s:"li",correct:"b"},{s:"am",correct:"l"},
+      {s:"fa",correct:"b"},{s:"to",correct:"b"},{s:"pro",correct:"l"},{s:"fu",correct:"l"},{s:"gus",correct:"l"},
+      {s:"La",correct:"b"},{s:"vi",correct:"b"},{s:"ni",correct:"l"},{s:"aque",correct:"b"},{s:"ve",correct:"b"},{s:"nit",correct:"l"}
+    ]
+  },
+  {
+    text:"litora multum ille et terris iactatus et alto",
+    syllables:[
+      {s:"li",correct:"l"},{s:"to",correct:"l"},{s:"ra",correct:"l"},{s:"mul",correct:"l"},{s:"tum",correct:"b"},{s:"il",correct:"b"},
+      {s:"le",correct:"b"},{s:"et",correct:"b"},{s:"ter",correct:"l"},{s:"ris",correct:"b"},{s:"iac",correct:"l"},{s:"ta",correct:"b"},
+      {s:"tus",correct:"b"},{s:"et",correct:"b"},{s:"al",correct:"b"},{s:"to",correct:"l"}
+    ]
+  },
+  {
+    text:"vi superum saevae memorem Iunonis ob iram",
+    syllables:[
+      {s:"vi",correct:"l"},{s:"su",correct:"b"},{s:"pe",correct:"b"},{s:"rum",correct:"b"},
+      {s:"sae",correct:"l"},{s:"vae",correct:"b"},{s:"me",correct:"b"},{s:"mo",correct:"b"},{s:"rem",correct:"l"},
+      {s:"Iu",correct:"b"},{s:"no",correct:"l"},{s:"nis",correct:"b"},{s:"ob",correct:"b"},{s:"i",correct:"b"},{s:"ram",correct:"l"}
+    ]
+  }
+];
+
+let currentIndex = 0;
+let score = 0;
+const pointsPerSyllable = 10;
+let isValidated = false;
+
+const scoreEl = document.getElementById('score');
+const startBtn = document.getElementById('startBtn');
+const intro = document.getElementById('intro');
+const game = document.getElementById('game');
+const linesContainer = document.getElementById('linesContainer');
+const resultArea = document.getElementById('resultArea');
+const validateBtn = document.getElementById('validateBtn');
+const nextBtn = document.getElementById('nextBtn');
+const currentLineIndex = document.getElementById('currentLineIndex');
+const totalLines = document.getElementById('totalLines');
+
+totalLines.textContent = versData.length;
+
+function createLineCard(lineObj, index){
+  const card = document.createElement('div');
+  card.className = 'line-card';
+  card.dataset.index = index;
+
+  const header = document.createElement('div');
+  header.className = 'line-number';
+  header.innerHTML = `Vers ${index+1} <span class="small" style="margin-left:8px;color:var(--muted);font-weight:600">${lineObj.text}</span>`;
+  card.appendChild(header);
+
+  const text = document.createElement('div');
+  text.className = 'line-text';
+
+  lineObj.syllables.forEach((syll, si) => {
+    const syl = document.createElement('div');
+    syl.className = 'syllable';
+    syl.tabIndex = 0;
+    syl.dataset.choice = ''; // '' initial (no indicator)
+    syl.dataset.correct = syll.correct;
+    syl.dataset.index = si;
+
+    const choice = document.createElement('div');
+    choice.className = 'choice';
+    choice.textContent = ''; // initial: nothing
+
+    const txt = document.createElement('div');
+    txt.className = 'text';
+    txt.textContent = syll.s;
+
+    syl.appendChild(choice);
+    syl.appendChild(txt);
+
+    syl.addEventListener('click', (e) => {
+      e.currentTarget.classList.add('focus');
+      cycleChoice(e.currentTarget);
+      setTimeout(()=> e.currentTarget.classList.remove('focus'),190);
+    });
+    syl.addEventListener('keydown', (e) => {
+      if(e.key === 'Enter' || e.key === ' ') { e.preventDefault(); cycleChoice(syl); }
+      if(e.key === 'b') setChoice(syl,'b');
+      if(e.key === 'l') setChoice(syl,'l');
+    });
+
+    text.appendChild(syl);
+  });
+
+  card.appendChild(text);
+  return card;
+}
+
+function renderCurrentLine(){
+  linesContainer.innerHTML = '';
+  const lineObj = versData[currentIndex];
+  const card = createLineCard(lineObj, currentIndex);
+  linesContainer.appendChild(card);
+  currentLineIndex.textContent = currentIndex+1;
+  resultArea.innerHTML = '';
+
+  isValidated = false;
+  validateBtn.disabled = false;
+  nextBtn.classList.add('disabled-hidden');
+}
+
+function cycleChoice(sylEl){
+  // If empty -> set to brève ('b')
+  // If 'b' -> set to 'l'
+  // If 'l' -> set to 'b' (toggle between b and l)
+  if(isValidated) return;
+  const cur = sylEl.dataset.choice;
+  const next = cur === 'b' ? 'l' : 'b';
+  setChoice(sylEl, next);
+}
+
+function setChoice(sylEl, choice){
+  if(isValidated) return;
+  sylEl.dataset.choice = choice;
+  const choiceDiv = sylEl.querySelector('.choice');
+  choiceDiv.textContent = choice === 'b' ? 'Brève' : 'Longue';
+  sylEl.classList.remove('correct','wrong');
+}
+
+function evaluateLineAndScore(){
+  if(isValidated) return;
+  const card = linesContainer.querySelector('.line-card');
+  if(!card) return;
+  const syls = Array.from(card.querySelectorAll('.syllable'));
+  let lineScore = 0;
+  let missing = 0;
+  let allCorrect = true;
+  syls.forEach(syl => {
+    const chosen = syl.dataset.choice;
+    const correct = syl.dataset.correct;
+    if(!chosen){ missing++; allCorrect = false; syl.classList.add('wrong'); return; }
+    if(chosen === correct){
+      lineScore += pointsPerSyllable;
+      syl.classList.add('correct');
+      syl.classList.remove('wrong');
+    } else {
+      allCorrect = false;
+      syl.classList.add('wrong');
+      syl.classList.remove('correct');
+    }
+  });
+
+  score += lineScore;
+  scoreEl.textContent = score;
+  resultArea.innerHTML = `<strong>+${lineScore} pts</strong>` + (missing ? ` — ${missing} syllabe(s) non choisie(s)` : '');
+
+  if(allCorrect && syls.length>0){
+    launchConfetti();
+    const congr = document.createElement('div');
+    congr.textContent = 'Parfait ! 🎉 🏺';
+    congr.style.marginTop = '6px';
+    resultArea.appendChild(congr);
+  }
+
+  isValidated = true;
+  validateBtn.disabled = true;
+  nextBtn.classList.remove('disabled-hidden');
+}
+
+function nextLine(){
+  if(currentIndex >= versData.length - 1){
+    endGame();
+    return;
+  }
+  currentIndex++;
+  renderCurrentLine();
+}
+
+startBtn.addEventListener('click', () => {
+  intro.style.display = 'none';
+  game.style.display = '';
+  currentIndex = 0;
+  score = 0;
+  scoreEl.textContent = score;
+  renderCurrentLine();
+  setTimeout(()=> window.scrollTo({top:0,behavior:'smooth'}),100);
+});
+
+validateBtn.addEventListener('click', () => {
+  evaluateLineAndScore();
+});
+
+nextBtn.addEventListener('click', () => {
+  nextLine();
+});
+
+/* Confetti implementation covering full width */
+function rand(min,max){ return Math.random()*(max-min)+min; }
+function launchConfetti(count=80){
+  const colors = ['#ff4757','#ff6b6b','#f59e0b','#10b981','#3b82f6','#8b5cf6','#f43f5e','#fb923c'];
+  for(let i=0;i<count;i++){
+    const el = document.createElement('div');
+    el.className='confetti-piece';
+    document.body.appendChild(el);
+    const color = colors[Math.floor(Math.random()*colors.length)];
+    el.style.background = color;
+    el.style.left = (rand(0,100)) + 'vw';             // full width distribution
+    el.style.top = (-rand(2,10)) + 'vh';
+    el.style.width = (rand(6,14))+'px';
+    el.style.height = (rand(8,18))+'px';
+    el.style.opacity = '0.65';
+    el.style.transform = `rotate(${rand(0,360)}deg)`;
+    const duration = rand(1600,3200);
+    const sway = rand(-25,25);
+    const start = performance.now();
+    const startLeft = parseFloat(el.style.left);
+    function frame(t){
+      const elapsed = t-start;
+      const p = Math.min(1, elapsed/duration);
+      el.style.top = ( -8 + p*(115) ) + 'vh';
+      el.style.left = `calc(${startLeft}vw + ${sway*p}vw)`;
+      el.style.transform = `rotate(${360*p}deg)`;
+      el.style.opacity = String(0.65 * (1 - p));
+      if(p<1) requestAnimationFrame(frame);
+      else el.remove();
+    }
+    requestAnimationFrame(frame);
+  }
+}
+
+function endGame(){
+  linesContainer.innerHTML = '';
+
+  resultArea.innerHTML = `
+    <div style="padding:20px;text-align:center">
+      <h2>Fin du jeu 🎉</h2>
+      <p>Score final : <strong>${score}</strong></p>
+      <button class="btn" onclick="restartGame()">Rejouer</button>
+    </div>
+  `;
+
+  validateBtn.style.display = 'none';
+  nextBtn.style.display = 'none';
+}
+
+function restartGame(){
+  validateBtn.style.display = '';
+  nextBtn.style.display = '';
+  currentIndex = 0;
+  score = 0;
+  scoreEl.textContent = score;
+  renderCurrentLine();
+}
+
+/* Helper to add verses programmatically */
+window.__scansion = {
+  addVerse(obj){
+    versData.push(obj);
+    totalLines.textContent = versData.length;
+  }
+};
+
+/* Accessibility: Escape returns to intro */
+document.addEventListener('keydown', (e) => {
+  if(e.key === 'Escape'){ intro.style.display=''; game.style.display='none'; }
+});
+</script>
+</body>
+</html>
