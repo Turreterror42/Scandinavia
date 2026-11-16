@@ -1,4 +1,4 @@
-# Schola Latina — Ars metrica
+# Scandinavia — Ars metrica
 
 Practise the rhythm of classical Latin poetry by identifying short and long syllables. Choose an excerpt, mark its syllables, and check your scansion.
 
